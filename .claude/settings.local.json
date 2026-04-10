@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xxd /Users/thejas.hari/projects/personal/todo_tracker/docs/architecture.md)",
+      "Bash(flutter pub:*)",
+      "Bash(dart analyze:*)",
+      "Bash(dart run:*)",
+      "Bash(ls /Users/thejas.hari/projects/personal/todo_tracker/lib/core/database/*.g.dart)",
+      "Bash(flutter test:*)",
+      "Bash(flutter clean:*)",
+      "Bash(rm -rf /private/tmp/claude-502)",
+      "Bash(rm -rf /Users/thejas.hari/.pub-cache/hosted/pub.dev/flutter_local_notifications_linux-*)",
+      "Bash(rm -rf /var/folders/52/yvzh_lxs1q7gg3dyqmfxb91w0000gp/T/flutter_tools.*)",
+      "Bash(./gradlew clean:*)",
+      "Bash(flutter run:*)",
+      "Bash(/Users/thejas.hari/projects/personal/todo_tracker/android/gradlew --stop)",
+      "Bash(rm -rf /Users/thejas.hari/.gradle/caches/8.14 /Users/thejas.hari/.gradle/daemon/8.14 /Users/thejas.hari/projects/personal/todo_tracker/android/.gradle)",
+      "Read(//Users/thejas.hari/.gradle/caches/**)",
+      "Bash(xattr -cr /Users/thejas.hari/.gradle/caches/8.14)",
+      "Read(//Users/thejas.hari/.pub-cache/hosted/pub.dev/drift-2.28.2/lib/**)"
+    ],
+    "additionalDirectories": [
+      "/Users/thejas.hari/.gradle/caches/8.14",
+      "/Users/thejas.hari/.gradle/caches/journal-1"
+    ]
+  }
+}

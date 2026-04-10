@@ -1,0 +1,1 @@
+- [Spec v1.3 features](project_v1_3_features.md) — Priority, labels, reports screen added to architecture; schema v4; denormalized label storage
