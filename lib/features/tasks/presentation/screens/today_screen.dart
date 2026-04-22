@@ -366,7 +366,14 @@ class _AllDoneCelebrationState extends State<_AllDoneCelebration>
           children: [
             ScaleTransition(
               scale: _pulseScale,
-              child: Icon(Icons.task_alt, size: 56, color: success),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: success.withValues(alpha: 0.06),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.task_alt, size: 56, color: success),
+              ),
             ),
             const SizedBox(height: 14),
             Text(

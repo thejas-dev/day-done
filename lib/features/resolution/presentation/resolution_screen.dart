@@ -472,7 +472,7 @@ class _EodTaskRowState extends ConsumerState<_EodTaskRow> {
               ),
             ),
             Positioned(
-              left: 0,
+              left: 5,
               top: 0,
               bottom: 0,
               width: kPriorityStripWidth,
@@ -527,6 +527,8 @@ class _EodSegmentButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          splashColor: Colors.transparent,
+          enableFeedback: false,
           onTap: onTap,
           borderRadius: AppRadius.smAll,
           child: Ink(

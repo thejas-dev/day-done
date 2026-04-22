@@ -61,6 +61,8 @@ class TaskTile extends ConsumerWidget {
     Widget tile = Material(
       color: Colors.transparent,
       child: InkWell(
+        splashColor: Colors.transparent,
+        enableFeedback: false,
         borderRadius: AppRadius.mdAll,
         onTap: () => showTaskActionSheet(context, task),
         child: Container(
@@ -83,7 +85,7 @@ class TaskTile extends ConsumerWidget {
             children: [
               if (task.priority != Priority.none)
                 Positioned(
-                  left: 0,
+                  left: 5,
                   top: 0,
                   bottom: 0,
                   width: kPriorityStripWidth,

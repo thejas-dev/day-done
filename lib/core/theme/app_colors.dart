@@ -219,4 +219,4 @@ abstract class AppRadius {
 }
 
 /// Priority strip width (left edge of task tiles).
-const double kPriorityStripWidth = 4.0;
+const double kPriorityStripWidth = 5.0;

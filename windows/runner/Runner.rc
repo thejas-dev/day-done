@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "todo_tracker" "\0"
+            VALUE "FileDescription", "DayDone" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "todo_tracker" "\0"
+            VALUE "InternalName", "DayDone" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "todo_tracker.exe" "\0"
-            VALUE "ProductName", "todo_tracker" "\0"
+            VALUE "OriginalFilename", "DayDone.exe" "\0"
+            VALUE "ProductName", "DayDone" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
