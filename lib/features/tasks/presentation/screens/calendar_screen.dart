@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:todo_tracker/core/theme/app_colors.dart';
+import 'package:todo_tracker/core/widgets/section_header.dart';
 import 'package:todo_tracker/features/tasks/presentation/providers/calendar_day_tasks_provider.dart';
 import 'package:todo_tracker/features/tasks/presentation/providers/calendar_provider.dart';
 import 'package:todo_tracker/features/tasks/presentation/widgets/filter_chip_bar.dart';
@@ -54,8 +55,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildCalendar(
-      BuildContext context, Map<DateTime, int> indicators) {
+  Widget _buildCalendar(BuildContext context, Map<DateTime, int> indicators) {
     final theme = Theme.of(context);
     final brightness = theme.brightness;
     final isLight = brightness == Brightness.light;
@@ -83,8 +83,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       headerStyle: HeaderStyle(
         formatButtonVisible: false,
         titleCentered: true,
-        titleTextStyle:
-            theme.textTheme.titleMedium ?? const TextStyle(),
+        titleTextStyle: theme.textTheme.titleMedium ?? const TextStyle(),
         leftChevronIcon: Icon(
           Icons.chevron_left,
           color: theme.colorScheme.onSurface,
@@ -100,29 +99,31 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       ),
       calendarStyle: CalendarStyle(
         todayDecoration: BoxDecoration(
-          color: (isLight ? AppColors.primaryLight : AppColors.primaryLightDarkMode),
+          color: (isLight
+              ? AppColors.primaryLight
+              : AppColors.primaryLightDarkMode),
           shape: BoxShape.circle,
         ),
         todayTextStyle: (theme.textTheme.bodyMedium ?? const TextStyle())
             .copyWith(
-                color: isLight
-                    ? AppColors.primaryDark
-                    : AppColors.primaryDarkDarkMode),
+              color: isLight
+                  ? AppColors.primaryDark
+                  : AppColors.primaryDarkDarkMode,
+            ),
         selectedDecoration: BoxDecoration(
           color: theme.colorScheme.primary,
           shape: BoxShape.circle,
         ),
         selectedTextStyle: (theme.textTheme.bodyMedium ?? const TextStyle())
             .copyWith(color: AppColors.onPrimary),
-        defaultTextStyle:
-            theme.textTheme.bodyMedium ?? const TextStyle(),
-        weekendTextStyle:
-            theme.textTheme.bodyMedium ?? const TextStyle(),
+        defaultTextStyle: theme.textTheme.bodyMedium ?? const TextStyle(),
+        weekendTextStyle: theme.textTheme.bodyMedium ?? const TextStyle(),
         outsideTextStyle: (theme.textTheme.bodyMedium ?? const TextStyle())
             .copyWith(
-                color: isLight
-                    ? AppColors.textMutedLight
-                    : AppColors.textMutedDark),
+              color: isLight
+                  ? AppColors.textMutedLight
+                  : AppColors.textMutedDark,
+            ),
         markersMaxCount: 1,
         markerDecoration: BoxDecoration(
           color: theme.colorScheme.primary,
@@ -134,8 +135,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       ),
       calendarBuilders: CalendarBuilders(
         markerBuilder: (context, date, events) {
-          final dateKey =
-              DateTime(date.year, date.month, date.day);
+          final dateKey = DateTime(date.year, date.month, date.day);
           final count = indicators[dateKey] ?? 0;
           if (count == 0) return null;
           return Positioned(
@@ -173,9 +173,7 @@ class _SelectedDayTaskList extends ConsumerWidget {
 
     return tasksAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Text('Failed to load tasks: $error'),
-      ),
+      error: (error, _) => Center(child: Text('Failed to load tasks: $error')),
       data: (allTasks) {
         if (allTasks.isEmpty) {
           return Center(
@@ -201,10 +199,16 @@ class _SelectedDayTaskList extends ConsumerWidget {
 
         return CustomScrollView(
           slivers: [
+            SliverToBoxAdapter(
+              child: SectionHeaderDS(
+                label:
+                    '${_formatSelectedDayLabel(selectedDay)} · ${filteredTasks.length}',
+              ),
+            ),
             // Filter chip bar
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: FilterChipBar(
                   tasks: allTasks,
                   onFilterChanged: onFilterChanged,
@@ -241,10 +245,36 @@ class _SelectedDayTaskList extends ConsumerWidget {
               ),
 
             const SliverPadding(
-                padding: EdgeInsets.only(bottom: AppSpacing.xl5)),
+              padding: EdgeInsets.only(bottom: 70),
+            ),
           ],
         );
       },
     );
+  }
+
+  static String _formatSelectedDayLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final dateOnly = DateTime(date.year, date.month, date.day);
+    if (dateOnly == today) return 'Today';
+    if (dateOnly == tomorrow) return 'Tomorrow';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
   }
 }

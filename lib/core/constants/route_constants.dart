@@ -3,6 +3,8 @@ abstract class RouteConstants {
   static const String today = '/today';
   static const String calendar = '/calendar';
   static const String backlog = '/backlog';
+  /// Shell route — placeholder until Phase 2 Reports feature.
+  static const String reports = '/reports';
   static const String taskCreate = '/tasks/create';
   static const String taskEdit = '/tasks/edit/:id';
   static const String settings = '/settings';

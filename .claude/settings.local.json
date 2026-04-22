@@ -17,11 +17,18 @@
       "Bash(rm -rf /Users/thejas.hari/.gradle/caches/8.14 /Users/thejas.hari/.gradle/daemon/8.14 /Users/thejas.hari/projects/personal/todo_tracker/android/.gradle)",
       "Read(//Users/thejas.hari/.gradle/caches/**)",
       "Bash(xattr -cr /Users/thejas.hari/.gradle/caches/8.14)",
-      "Read(//Users/thejas.hari/.pub-cache/hosted/pub.dev/drift-2.28.2/lib/**)"
+      "Read(//Users/thejas.hari/.pub-cache/hosted/pub.dev/drift-2.28.2/lib/**)",
+      "Bash(flutter --version)",
+      "Read(//Users/thejas.hari/flutter/packages/flutter_tools/**)",
+      "Bash(dart -c 'print\\(\"test\"\\)')"
     ],
     "additionalDirectories": [
       "/Users/thejas.hari/.gradle/caches/8.14",
       "/Users/thejas.hari/.gradle/caches/journal-1"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "flight-booking-mcp"
+  ]
 }

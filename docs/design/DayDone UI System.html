@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>DayDone — UI System</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3">
+<script src="deck-stage.js"></script>
+<style>
+  body { background:#000; }
+  /* Two-phone layout */
+  .twin {
+    display: flex; gap: 64px; justify-content: center; align-items: flex-start;
+  }
+  .phone-wrap { display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .ph-mode {
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 600;
+    padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); color:#ccc;
+  }
+  .ph-mode.light { background: #fafafa; color:#1a1a1a; border-color: #fafafa; }
+  .notes { max-width: 280px; font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.5; }
+  .notes h4 { font-size: 11px; letter-spacing: 0.16em; color: rgba(255,255,255,0.9); margin:0 0 10px; text-transform: uppercase; font-weight:700; }
+  .notes ul { margin: 0; padding-left: 16px; }
+  .notes li { margin-bottom: 6px; }
+  .notes .tag { display:inline-block; font-size:10px; padding:1px 6px; border-radius:4px; background: rgba(255,255,255,0.08); margin-right:4px; color:rgba(255,255,255,0.8); }
+
+  /* Slide layout modes */
+  section {
+    position: relative;
+    font-family: 'Roboto', system-ui, sans-serif;
+    color: #fff;
+  }
+  .slide-bg {
+    position: absolute; inset:0; background: #0a0a0a; z-index:0;
+  }
+  .slide-content { position: relative; z-index: 1; height:100%; display:flex; flex-direction:column; }
+
+  /* cover slide */
+  .cover {
+    display:flex; align-items:center; justify-content:center; gap:80px; height:100%;
+    padding: 56px 80px;
+  }
+  .cover-left h1 { font-size: 96px; font-weight: 700; letter-spacing: -0.04em; line-height: 0.95; margin:0 0 20px; }
+  .cover-left h1 em { font-style: normal; color: #4DB6AC; }
+  .cover-left p { font-size: 20px; color: rgba(255,255,255,0.7); max-width: 520px; line-height:1.5; margin: 0 0 24px; }
+  .cover-meta { display:flex; gap:24px; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:600; }
+
+  /* Component sheet layout */
+  .comp-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px;
+    padding: 0 40px;
+  }
+  .comp-cell { display:flex; flex-direction:column; gap: 8px; }
+  .comp-cell .cap {
+    font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.6);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .comp-tile-wrap {
+    background: #f5f5f3; padding: 12px; border-radius: 12px;
+  }
+  .comp-tile-wrap.dark { background: #121212; }
+
+  /* Token sheet */
+  .tok-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px;
+    padding: 0 64px;
+  }
+  .tok-col h3 { font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase; color:#999; margin: 0 0 16px; font-weight:700; }
+  .tok-group { margin-bottom: 20px; }
+  .tok-group h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color:#888; margin: 0 0 10px; font-weight: 600; }
+  .tok-row { display:flex; align-items:center; gap: 10px; font-size: 12px; padding: 4px 0; color: #eee; }
+  .tok-row .sw { width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); flex-shrink:0; }
+  .tok-row .name { font-weight: 500; min-width: 180px; }
+  .tok-row .hex { color:#999; font-family: ui-monospace, monospace; font-size: 11px; }
+
+  /* caption row for Today urgent / normal */
+  .state-caption {
+    display:flex; justify-content:center; gap:64px;
+    font-size: 12px; color: rgba(255,255,255,0.5); font-weight:500; text-transform:uppercase; letter-spacing: 0.16em;
+    margin-top: -8px;
+  }
+  .state-caption div { width: 360px; text-align:center; }
+
+  /* Edge states grid */
+  .edge-grid {
+    display:grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+    padding: 0 40px; flex:1; align-content: start;
+  }
+  .edge-card { display:flex; flex-direction:column; gap: 10px; }
+  .edge-card .cap {
+    font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85);
+  }
+  .edge-card .sub { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.4; }
+  .mini-phone {
+    width: 240px; height: 520px; background:#0b0b0b; border-radius:30px; padding:6px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+  }
+  .mini-phone .screen {
+    width:100%; height:100%; border-radius:24px; overflow:hidden; background: var(--bg); color: var(--text-primary); display:flex; flex-direction:column;
+  }
+  .tiny-stat { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.08); color:rgba(255,255,255,0.75); font-weight:600; letter-spacing: 0.06em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<deck-stage width="1920" height="1080">
+
+<!-- Cover -->
+<section data-label="Cover">
+  <div class="slide-bg" style="background: radial-gradient(ellipse at 30% 40%, #0f2d28 0%, #050505 60%);"></div>
+  <div class="slide-content cover">
+    <div class="cover-left">
+      <div style="font-size:14px; letter-spacing:0.24em; text-transform:uppercase; color:#4DB6AC; font-weight:600; margin-bottom:24px;">UI System · v1.0</div>
+      <h1>Day<em>Done</em>.</h1>
+      <p>A personal accountability todo app whose core mechanic is end-of-day task resolution — not passive list management.</p>
+      <div class="cover-meta">
+        <span>Android · 360×800</span><span>·</span><span>Light + Dark</span><span>·</span><span>9 screens</span><span>·</span><span>Material Symbols</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:24px; transform: rotate(-4deg);">
+      <div class="phone" style="width:280px; height:600px; border-radius:36px;">
+        <div class="screen" style="border-radius:26px;">
+          <div class="punch"></div>
+          <div style="padding: 40px 20px 0; color:var(--text-primary);">
+            <div style="font-size: 10px; letter-spacing: 0.16em; color:var(--text-secondary); text-transform:uppercase; font-weight:600; margin-bottom: 4px;">Sun · Apr 19</div>
+            <div style="font-size:20px; font-weight:700; letter-spacing:-0.01em;">Good evening, Samir</div>
+            <div style="display:flex; gap:6px; margin-top: 10px;">
+              <span class="pending-badge error">2 pending</span>
+              <span class="countdown-chip red"><span class="mi">timer</span>45m to bed</span>
+            </div>
+          </div>
+          <div style="padding: 20px 16px 0; display:flex; flex-direction:column; gap:6px;">
+            <div class="tile urgent urgent-state"><div class="stripe" style="background:var(--p-urgent);"></div><div class="body"><div class="checkbox"></div><div class="main"><div class="title">Submit launch copy for review</div></div></div></div>
+            <div class="tile"><div class="stripe" style="background:var(--p-high);"></div><div class="body"><div class="checkbox"></div><div class="main"><div class="title">Call dad back</div></div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="phone dark" style="width:280px; height:600px; border-radius:36px; margin-top: 60px;">
+        <div class="screen" style="border-radius:26px; background: #121212;">
+          <div class="punch"></div>
+          <div style="padding: 40px 20px 0; color:#fafafa;">
+            <div style="font-size: 10px; letter-spacing: 0.16em; color:#a0a0a0; text-transform:uppercase; font-weight:600; margin-bottom: 4px;">Mon · Apr 13</div>
+            <div style="font-size:20px; font-weight:700; letter-spacing:-0.01em;">All done for today.</div>
+            <div style="font-size: 13px; color:#a0a0a0; margin-top: 6px;">Enjoy your evening.</div>
+          </div>
+          <div style="flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px;">
+            <span class="mi" style="font-size:72px; color:#4DB6AC; font-family:'Material Symbols Outlined';">&#xe2e6;</span>
+            <span style="padding: 6px 14px; border-radius: 999px; background:rgba(255,179,0,0.14); color:#FFB300; font-weight:700; font-size:13px;">🔥 Day 12 in a row</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Design system overview will be slide 2; we'll inject content via a JS helper -->
+<section data-label="Design System"></section>
+
+<!-- Onboarding 1–4 -->
+<section data-label="Onboarding 1 Bedtime"></section>
+<section data-label="Onboarding 2 Morning"></section>
+<section data-label="Onboarding 3 First Task"></section>
+<section data-label="Onboarding 4 Notifications"></section>
+
+<!-- Today -->
+<section data-label="Today Normal"></section>
+<section data-label="Today Urgent"></section>
+<section data-label="Today Empty"></section>
+
+<!-- Task sheet -->
+<section data-label="Task Create Edit"></section>
+
+<!-- Bottom sheets A-D -->
+<section data-label="Sheet A Snooze"></section>
+<section data-label="Sheet B Context Menu"></section>
+<section data-label="Sheet C Log Progress"></section>
+<section data-label="Sheet D End of Day"></section>
+
+<!-- Calendar, Backlog, Reports, Settings -->
+<section data-label="Calendar"></section>
+<section data-label="Backlog"></section>
+<section data-label="Reports"></section>
+<section data-label="Settings"></section>
+
+<!-- Pod -->
+<section data-label="Pod Empty"></section>
+<section data-label="Pod Active"></section>
+
+<!-- Edge States + Component sheet + token sheet -->
+<section data-label="Edge States"></section>
+<section data-label="Component Sheet"></section>
+<section data-label="Tokens Light"></section>
+<section data-label="Tokens Dark"></section>
+
+</deck-stage>
+
+<script src="dd-helpers.js"></script>
+<script src="build-slides.js"></script>
+</body>
+</html>

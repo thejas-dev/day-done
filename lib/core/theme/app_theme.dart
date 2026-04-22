@@ -4,18 +4,42 @@ import 'app_colors.dart';
 import 'app_typography.dart';
 
 abstract class AppTheme {
-  // ── Card shadow (light only) ─────────────────────────────────────────────
-  static List<BoxShadow> get cardShadow => [
-    const BoxShadow(
-      color: Color(0x0A1A2B3C),
-      blurRadius: 8,
-      offset: Offset(0, 2),
-    ),
-    const BoxShadow(
-      color: Color(0x061A2B3C),
-      blurRadius: 1,
-      offset: Offset(0, 1),
-    ),
+  // ── Elevation / Shadow tokens (from design ELEV) ─────────────────────────
+
+  /// Light tile: 0 1px 2px rgba(16,24,32,0.06), 0 1px 1px rgba(16,24,32,0.04)
+  static List<BoxShadow> get tileShadowLight => const [
+    BoxShadow(color: Color(0x0F101820), blurRadius: 2, offset: Offset(0, 1)),
+    BoxShadow(color: Color(0x0A101820), blurRadius: 1, offset: Offset(0, 1)),
+  ];
+
+  /// Dark tile: 0 1px 2px rgba(0,0,0,0.4)
+  static List<BoxShadow> get tileShadowDark => const [
+    BoxShadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
+  ];
+
+  /// Light sheet: 0 -8px 24px rgba(16,24,32,0.12)
+  static List<BoxShadow> get sheetShadowLight => const [
+    BoxShadow(color: Color(0x1F101820), blurRadius: 24, offset: Offset(0, -8)),
+  ];
+
+  /// Dark sheet: 0 -10px 28px rgba(0,0,0,0.6)
+  static List<BoxShadow> get sheetShadowDark => const [
+    BoxShadow(color: Color(0x99000000), blurRadius: 28, offset: Offset(0, -10)),
+  ];
+
+  /// Light FAB — Figma `--shadow-fab`: 0 6px 16px rgba(0, 121, 107, 0.35)
+  static List<BoxShadow> get fabShadowLight => const [
+    BoxShadow(color: Color(0x5900796B), blurRadius: 16, offset: Offset(0, 6)),
+  ];
+
+  /// Card / task tile elevation — matches `--shadow-tile` (light).
+  static List<BoxShadow> cardShadow(Brightness brightness) =>
+      brightness == Brightness.light ? tileShadowLight : tileShadowDark;
+
+  /// Dark FAB: 0 6px 14px rgba(77,182,172,0.35), 0 2px 4px rgba(0,0,0,0.4)
+  static List<BoxShadow> get fabShadowDark => const [
+    BoxShadow(color: Color(0x594DB6AC), blurRadius: 14, offset: Offset(0, 6)),
+    BoxShadow(color: Color(0x66000000), blurRadius: 4, offset: Offset(0, 2)),
   ];
 
   // ── Light Theme ──────────────────────────────────────────────────────────
@@ -24,33 +48,33 @@ abstract class AppTheme {
 
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary:          AppColors.primary,
-      onPrimary:        AppColors.onPrimary,
-      primaryContainer: AppColors.primaryLight,
-      onPrimaryContainer: AppColors.primaryDark,
-      secondary:        AppColors.primary,
-      onSecondary:      AppColors.onPrimary,
-      secondaryContainer: AppColors.primaryLight,
-      onSecondaryContainer: AppColors.primaryDark,
-      tertiary:         AppColors.amber,
-      onTertiary:       AppColors.onPrimary,
-      tertiaryContainer: AppColors.amberLight,
-      onTertiaryContainer: AppColors.warning,
-      error:            AppColors.error,
-      onError:          AppColors.onPrimary,
-      errorContainer:   AppColors.errorLight,
-      onErrorContainer: AppColors.error,
-      surface:          AppColors.surfaceLight,
-      onSurface:        AppColors.textPrimaryLight,
-      surfaceContainerHighest: AppColors.surfaceVariantLight,
-      onSurfaceVariant: AppColors.textSecondaryLight,
-      outline:          AppColors.borderLight,
-      outlineVariant:   AppColors.dividerLight,
-      shadow:           const Color(0x0A1A2B3C),
-      scrim:            const Color(0x661A2B3C),
-      inverseSurface:   AppColors.textPrimaryLight,
-      onInverseSurface: AppColors.surfaceLight,
-      inversePrimary:   AppColors.primaryLight,
+      primary:            AppColors.primary,
+      onPrimary:          AppColors.onPrimary,
+      primaryContainer:   AppColors.primaryContainer,
+      onPrimaryContainer: AppColors.primary,
+      secondary:          AppColors.primary,
+      onSecondary:        AppColors.onPrimary,
+      secondaryContainer: AppColors.primaryContainer,
+      onSecondaryContainer: AppColors.primary,
+      tertiary:           AppColors.warningLight,
+      onTertiary:         AppColors.onPrimary,
+      tertiaryContainer:  AppColors.warningTintLight,
+      onTertiaryContainer: AppColors.warningLight,
+      error:              AppColors.errorLight,
+      onError:            AppColors.onPrimary,
+      errorContainer:     AppColors.errorTintLight,
+      onErrorContainer:   AppColors.errorLight,
+      surface:            AppColors.surfaceLight,
+      onSurface:          AppColors.textPrimaryLight,
+      surfaceContainerHighest: AppColors.surfaceRaisedLight,
+      onSurfaceVariant:   AppColors.textSecondaryLight,
+      outline:            AppColors.dividerLight,
+      outlineVariant:     AppColors.dividerLight,
+      shadow:             const Color(0x0F101820),
+      scrim:              AppColors.scrimLight,
+      inverseSurface:     AppColors.textPrimaryLight,
+      onInverseSurface:   AppColors.surfaceLight,
+      inversePrimary:     AppColors.primaryContainer,
     );
 
     return ThemeData(
@@ -78,9 +102,9 @@ abstract class AppTheme {
 
       // ── Bottom Navigation ─────────────────────────────────────────────────
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surfaceLight,
+        backgroundColor: AppColors.navLight,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textMutedLight,
+        unselectedItemColor: AppColors.textSecondaryLight,
         showSelectedLabels: true,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
@@ -92,9 +116,7 @@ abstract class AppTheme {
         color: AppColors.surfaceLight,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.mdAll,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
         margin: EdgeInsets.zero,
       ),
 
@@ -103,23 +125,23 @@ abstract class AppTheme {
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return AppColors.disabledBackground;
+              return AppColors.chipBorderLight;
             }
             return AppColors.primary;
           }),
           foregroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return AppColors.disabledText;
+              return AppColors.textDisabledLight;
             }
             return AppColors.onPrimary;
           }),
-          overlayColor: WidgetStateProperty.all(Colors.white.withOpacity(0.1)),
+          overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.1)),
           elevation: WidgetStateProperty.all(0),
           shadowColor: WidgetStateProperty.all(Colors.transparent),
           shape: WidgetStateProperty.all(
-            RoundedRectangleBorder(borderRadius: AppRadius.xlAll),
+            RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
           ),
-          minimumSize: WidgetStateProperty.all(const Size(double.infinity, 56)),
+          minimumSize: WidgetStateProperty.all(const Size(double.infinity, 48)),
           textStyle: WidgetStateProperty.all(
             AppTypography.textTheme(brightness).labelLarge,
           ),
@@ -132,7 +154,7 @@ abstract class AppTheme {
         style: ButtonStyle(
           foregroundColor: WidgetStateProperty.all(AppColors.textSecondaryLight),
           overlayColor: WidgetStateProperty.all(
-            AppColors.primary.withOpacity(0.06),
+            AppColors.primary.withValues(alpha: 0.06),
           ),
           textStyle: WidgetStateProperty.all(
             AppTypography.textTheme(brightness).bodyMedium,
@@ -151,11 +173,11 @@ abstract class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: AppRadius.smAll,
-          borderSide: const BorderSide(color: AppColors.borderLight, width: 1),
+          borderSide: const BorderSide(color: AppColors.dividerLight, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: AppRadius.smAll,
-          borderSide: const BorderSide(color: AppColors.borderLight, width: 1),
+          borderSide: const BorderSide(color: AppColors.dividerLight, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppRadius.smAll,
@@ -163,14 +185,14 @@ abstract class AppTheme {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: AppRadius.smAll,
-          borderSide: const BorderSide(color: AppColors.error, width: 1),
+          borderSide: const BorderSide(color: AppColors.errorLight, width: 1),
         ),
         hintStyle: AppTypography.textTheme(brightness).bodyMedium?.copyWith(
-          color: AppColors.textMutedLight,
+          color: AppColors.textDisabledLight,
         ),
         labelStyle: AppTypography.textTheme(brightness).bodyMedium,
         errorStyle: AppTypography.textTheme(brightness).bodySmall?.copyWith(
-          color: AppColors.error,
+          color: AppColors.errorLight,
         ),
       ),
 
@@ -181,11 +203,11 @@ abstract class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
+            top: Radius.circular(AppRadius.sheetTop),
           ),
         ),
         showDragHandle: false,
-        dragHandleColor: AppColors.borderLight,
+        dragHandleColor: AppColors.dividerLight,
         dragHandleSize: Size(32, 4),
       ),
 
@@ -198,10 +220,10 @@ abstract class AppTheme {
 
       // ── Chip (base — use custom widgets where possible) ───────────────────
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.surfaceVariantLight,
+        backgroundColor: AppColors.surfaceLight,
         labelStyle: AppTypography.textTheme(brightness).labelSmall,
-        side: BorderSide.none,
-        shape: const StadiumBorder(),
+        side: const BorderSide(color: AppColors.chipBorderLight),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.smAll),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.sm,
           vertical: AppSpacing.xs,
@@ -222,12 +244,22 @@ abstract class AppTheme {
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return AppColors.primary;
-          return AppColors.textMutedLight;
+          return AppColors.textDisabledLight;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.primaryLight;
-          return AppColors.borderLight;
+          if (states.contains(WidgetState.selected)) return AppColors.primaryContainer;
+          return AppColors.dividerLight;
         }),
+      ),
+
+      // ── FloatingActionButton ──────────────────────────────────────────────
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.onPrimary,
+        elevation: 6,
+        highlightElevation: 8,
+        shape: CircleBorder(),
+        sizeConstraints: BoxConstraints.tightFor(width: 56, height: 56),
       ),
     );
   }
@@ -238,33 +270,33 @@ abstract class AppTheme {
 
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary:          AppColors.primaryDarkMode,
-      onPrimary:        AppColors.onPrimary,
-      primaryContainer: AppColors.primaryLightDarkMode,
-      onPrimaryContainer: AppColors.primaryDarkDarkMode,
-      secondary:        AppColors.primaryDarkMode,
-      onSecondary:      AppColors.onPrimary,
-      secondaryContainer: AppColors.primaryLightDarkMode,
-      onSecondaryContainer: AppColors.primaryDarkMode,
-      tertiary:         AppColors.amber,
-      onTertiary:       AppColors.onPrimary,
-      tertiaryContainer: AppColors.badgeAmberDark,
-      onTertiaryContainer: AppColors.amber,
-      error:            AppColors.error,
-      onError:          AppColors.onPrimary,
-      errorContainer:   AppColors.badgeRedDark,
-      onErrorContainer: AppColors.error,
-      surface:          AppColors.surfaceDark,
-      onSurface:        AppColors.textPrimaryDark,
-      surfaceContainerHighest: AppColors.surfaceVariantDark,
-      onSurfaceVariant: AppColors.textSecondaryDark,
-      outline:          AppColors.borderDark,
-      outlineVariant:   AppColors.dividerDark,
-      shadow:           Colors.transparent,
-      scrim:            const Color(0x99000000),
-      inverseSurface:   AppColors.surfaceLight,
-      onInverseSurface: AppColors.textPrimaryLight,
-      inversePrimary:   AppColors.primaryLightDarkMode,
+      primary:            AppColors.primaryDark,
+      onPrimary:          AppColors.onPrimaryDark,
+      primaryContainer:   AppColors.primaryContainerDark,
+      onPrimaryContainer: AppColors.primaryDark,
+      secondary:          AppColors.primaryDark,
+      onSecondary:        AppColors.onPrimaryDark,
+      secondaryContainer: AppColors.primaryContainerDark,
+      onSecondaryContainer: AppColors.primaryDark,
+      tertiary:           AppColors.warningDark,
+      onTertiary:         AppColors.onPrimaryDark,
+      tertiaryContainer:  AppColors.warningTintDark,
+      onTertiaryContainer: AppColors.warningDark,
+      error:              AppColors.errorDark,
+      onError:            AppColors.onPrimaryDark,
+      errorContainer:     AppColors.errorTintDark,
+      onErrorContainer:   AppColors.errorDark,
+      surface:            AppColors.surfaceDark,
+      onSurface:          AppColors.textPrimaryDark,
+      surfaceContainerHighest: AppColors.surfaceRaisedDark,
+      onSurfaceVariant:   AppColors.textSecondaryDark,
+      outline:            AppColors.dividerDark,
+      outlineVariant:     AppColors.dividerDark,
+      shadow:             Colors.transparent,
+      scrim:              AppColors.scrimDark,
+      inverseSurface:     AppColors.surfaceLight,
+      onInverseSurface:   AppColors.textPrimaryLight,
+      inversePrimary:     AppColors.primaryContainerDark,
     );
 
     return ThemeData(
@@ -290,9 +322,9 @@ abstract class AppTheme {
       ),
 
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surfaceDark,
-        selectedItemColor: AppColors.primaryDarkMode,
-        unselectedItemColor: AppColors.textMutedDark,
+        backgroundColor: AppColors.navDark,
+        selectedItemColor: AppColors.primaryDark,
+        unselectedItemColor: AppColors.textSecondaryDark,
         showSelectedLabels: true,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
@@ -311,23 +343,23 @@ abstract class AppTheme {
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return AppColors.surfaceVariantDark;
+              return AppColors.chipBorderDark;
             }
-            return AppColors.primaryDarkMode;
+            return AppColors.primaryDark;
           }),
           foregroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return AppColors.textMutedDark;
+              return AppColors.textDisabledDark;
             }
-            return AppColors.onPrimary;
+            return AppColors.onPrimaryDark;
           }),
-          overlayColor: WidgetStateProperty.all(Colors.white.withOpacity(0.08)),
+          overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.08)),
           elevation: WidgetStateProperty.all(0),
           shadowColor: WidgetStateProperty.all(Colors.transparent),
           shape: WidgetStateProperty.all(
-            RoundedRectangleBorder(borderRadius: AppRadius.xlAll),
+            RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
           ),
-          minimumSize: WidgetStateProperty.all(const Size(double.infinity, 56)),
+          minimumSize: WidgetStateProperty.all(const Size(double.infinity, 48)),
           textStyle: WidgetStateProperty.all(
             AppTypography.textTheme(brightness).labelLarge,
           ),
@@ -338,7 +370,7 @@ abstract class AppTheme {
         style: ButtonStyle(
           foregroundColor: WidgetStateProperty.all(AppColors.textSecondaryDark),
           overlayColor: WidgetStateProperty.all(
-            AppColors.primaryDarkMode.withOpacity(0.08),
+            AppColors.primaryDark.withValues(alpha: 0.08),
           ),
           textStyle: WidgetStateProperty.all(
             AppTypography.textTheme(brightness).bodyMedium,
@@ -349,29 +381,29 @@ abstract class AppTheme {
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceVariantDark,
+        fillColor: AppColors.surfaceRaisedDark,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.lg,
         ),
         border: OutlineInputBorder(
           borderRadius: AppRadius.smAll,
-          borderSide: const BorderSide(color: AppColors.borderDark, width: 1),
+          borderSide: const BorderSide(color: AppColors.dividerDark, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: AppRadius.smAll,
-          borderSide: const BorderSide(color: AppColors.borderDark, width: 1),
+          borderSide: const BorderSide(color: AppColors.dividerDark, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppRadius.smAll,
-          borderSide: const BorderSide(color: AppColors.primaryDarkMode, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.primaryDark, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: AppRadius.smAll,
-          borderSide: const BorderSide(color: AppColors.error, width: 1),
+          borderSide: const BorderSide(color: AppColors.errorDark, width: 1),
         ),
         hintStyle: AppTypography.textTheme(brightness).bodyMedium?.copyWith(
-          color: AppColors.textMutedDark,
+          color: AppColors.textDisabledDark,
         ),
         labelStyle: AppTypography.textTheme(brightness).bodyMedium,
       ),
@@ -382,11 +414,11 @@ abstract class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
+            top: Radius.circular(AppRadius.sheetTop),
           ),
         ),
         showDragHandle: false,
-        dragHandleColor: AppColors.borderDark,
+        dragHandleColor: AppColors.dividerDark,
         dragHandleSize: Size(32, 4),
       ),
 
@@ -397,10 +429,10 @@ abstract class AppTheme {
       ),
 
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.surfaceVariantDark,
+        backgroundColor: AppColors.surfaceDark,
         labelStyle: AppTypography.textTheme(brightness).labelSmall,
-        side: BorderSide.none,
-        shape: const StadiumBorder(),
+        side: const BorderSide(color: AppColors.chipBorderDark),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.smAll),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.sm,
           vertical: AppSpacing.xs,
@@ -418,13 +450,22 @@ abstract class AppTheme {
 
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.primaryDarkMode;
-          return AppColors.textMutedDark;
+          if (states.contains(WidgetState.selected)) return AppColors.primaryDark;
+          return AppColors.textDisabledDark;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.primaryLightDarkMode;
-          return AppColors.borderDark;
+          if (states.contains(WidgetState.selected)) return AppColors.primaryContainerDark;
+          return AppColors.dividerDark;
         }),
+      ),
+
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: AppColors.primaryDark,
+        foregroundColor: AppColors.onPrimaryDark,
+        elevation: 6,
+        highlightElevation: 8,
+        shape: CircleBorder(),
+        sizeConstraints: BoxConstraints.tightFor(width: 56, height: 56),
       ),
     );
   }

@@ -7,7 +7,7 @@ part of 'notification_providers.dart';
 // **************************************************************************
 
 String _$notificationServiceHash() =>
-    r'55f5270504fc04bcf39afc2f5d3c4e2353a733a8';
+    r'58da87941dbfa08925105dcc4d74091ee38c8593';
 
 /// Singleton [NotificationService] — initialized once, kept alive.
 ///
@@ -66,7 +66,7 @@ final notificationUtilsProvider = Provider<NotificationUtils>.internal(
 // ignore: unused_element
 typedef NotificationUtilsRef = ProviderRef<NotificationUtils>;
 String _$notificationRescheduleTriggerHash() =>
-    r'8c595737f4b0640087713c2046bdc7a630ffd3df';
+    r'60c0d6acf92874e58555ce9da2bf7a1833a998d5';
 
 /// Watches settings + today summary and triggers a reschedule whenever either
 /// changes. This is a keepAlive provider that runs as a side effect.

@@ -11,10 +11,7 @@ part 'notification_providers.g.dart';
 /// Singleton [NotificationService] — initialized once, kept alive.
 @Riverpod(keepAlive: true)
 NotificationService notificationService(Ref ref) {
-  final service = NotificationService();
-  // Fire-and-forget initialization.
-  service.init();
-  return service;
+  return NotificationService();
 }
 
 /// Singleton [NotificationScheduler] — stateless pure logic.
@@ -43,19 +40,23 @@ void notificationRescheduleTrigger(Ref ref) {
     final pendingCount = summary.pending + summary.snoozed;
     final utils = ref.read(notificationUtilsProvider);
 
+    Future<void> operation;
     if (pendingCount > 0) {
-      utils.reschedule(
+      operation = utils.reschedule(
         bedtime: settings.bedtime,
         morningCheckin: settings.morningCheckin,
         mode: settings.notificationMode,
         pendingCount: pendingCount,
       );
     } else if (summary.total > 0) {
-      // All tasks resolved — handle "all done early" logic.
-      utils.handleAllTasksResolved(bedtime: settings.bedtime);
+      operation = utils.handleAllTasksResolved(bedtime: settings.bedtime);
     } else {
-      // No tasks at all — cancel everything.
-      ref.read(notificationServiceProvider).cancelAll();
+      operation = ref.read(notificationServiceProvider).cancelAll();
     }
+
+    operation.catchError((Object e, StackTrace s) {
+      // ignore: avoid_print
+      print('[NOTIF] ERROR: $e\n$s');
+    });
   });
 }

@@ -3,6 +3,7 @@ import 'package:todo_tracker/features/tasks/data/task_repository.dart';
 import 'package:todo_tracker/features/tasks/domain/priority.dart';
 import 'package:todo_tracker/features/tasks/domain/task_model.dart';
 import 'package:todo_tracker/features/tasks/domain/task_type.dart';
+import 'package:todo_tracker/features/tasks/domain/today_task.dart';
 import 'package:todo_tracker/features/tasks/presentation/providers/task_providers.dart';
 
 part 'task_action_provider.g.dart';
@@ -86,6 +87,28 @@ class TaskActions extends _$TaskActions {
   Future<void> snooze(String id, DateTime snoozeUntil) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => _repo.snoozeTask(id, snoozeUntil));
+  }
+
+  /// Move a dated task's due date, or skip today's daily instance / bump dated to tomorrow.
+  Future<void> rescheduleTask(String taskId, DateTime newDate) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _repo.rescheduleTask(taskId, newDate));
+  }
+
+  /// "Skip today" — daily: close today's instance; dated: roll due date to tomorrow.
+  Future<void> skipToday(TodayTask task) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      if (task.isDailyInstance) {
+        await _repo.markDailyInstanceClosed(task.id);
+      } else {
+        final n = DateTime.now().add(const Duration(days: 1));
+        await _repo.rescheduleTask(
+          task.taskId,
+          DateTime(n.year, n.month, n.day),
+        );
+      }
+    });
   }
 
   Future<void> undoDone(String id) async {

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:todo_tracker/core/constants/notification_constants.dart';
@@ -14,12 +13,15 @@ class NotificationService {
   }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _plugin;
-  bool _initialized = false;
+  Future<void>? _initFuture;
 
   /// Initialize the notification plugin with platform-specific settings.
-  Future<void> init() async {
-    if (_initialized) return;
+  /// Safe to call multiple times — subsequent calls return the same future.
+  Future<void> init() {
+    return _initFuture ??= _doInit();
+  }
 
+  Future<void> _doInit() async {
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
     );
@@ -38,12 +40,17 @@ class NotificationService {
 
     await _plugin.initialize(initSettings);
     await _createChannels();
-    _initialized = true;
+  }
+
+  /// Ensures init has completed before proceeding.
+  Future<void> _ensureInitialized() async {
+    await init();
   }
 
   /// Request notification permissions from the OS.
   /// Returns true if granted, false otherwise.
   Future<bool> requestPermissions() async {
+    await _ensureInitialized();
     if (Platform.isIOS || Platform.isMacOS) {
       final result = await _plugin
           .resolvePlatformSpecificImplementation<
@@ -96,10 +103,7 @@ class NotificationService {
 
   /// Schedule a single notification.
   Future<void> scheduleNotification(ScheduledNotification notification) async {
-    if (!_initialized) {
-      debugPrint('NotificationService: not initialized, skipping schedule');
-      return;
-    }
+    await _ensureInitialized();
 
     final channelId = notification.isCritical
         ? NotificationChannels.criticalId
@@ -147,7 +151,9 @@ class NotificationService {
       notification.body,
       tzScheduledDate,
       details,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: notification.isCritical
+          ? AndroidScheduleMode.exactAllowWhileIdle
+          : AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
@@ -168,7 +174,7 @@ class NotificationService {
     required String body,
     bool isCritical = false,
   }) async {
-    if (!_initialized) return;
+    await _ensureInitialized();
 
     final channelId = isCritical
         ? NotificationChannels.criticalId
@@ -201,11 +207,13 @@ class NotificationService {
 
   /// Cancel all scheduled notifications.
   Future<void> cancelAll() async {
+    await _ensureInitialized();
     await _plugin.cancelAll();
   }
 
   /// Cancel a specific notification by id.
   Future<void> cancelById(int id) async {
+    await _ensureInitialized();
     await _plugin.cancel(id);
   }
 }

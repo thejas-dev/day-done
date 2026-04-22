@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:todo_tracker/core/constants/route_constants.dart';
+import 'package:todo_tracker/core/theme/app_colors.dart';
+import 'package:todo_tracker/core/theme/app_theme.dart';
+import 'package:todo_tracker/core/utils/bedtime_utils.dart';
+import 'package:todo_tracker/core/utils/date_utils.dart';
+import 'package:todo_tracker/core/widgets/daydone_bottom_nav.dart';
 import 'package:todo_tracker/features/resolution/presentation/resolution_screen.dart';
 import 'package:todo_tracker/features/settings/presentation/providers/settings_provider.dart';
 import 'package:todo_tracker/features/settings/presentation/settings_screen.dart';
-import 'package:todo_tracker/core/utils/date_utils.dart';
 import 'package:todo_tracker/features/tasks/presentation/providers/task_providers.dart';
+import 'package:todo_tracker/features/tasks/presentation/providers/today_summary_provider.dart';
 import 'package:todo_tracker/features/tasks/presentation/screens/backlog_screen.dart';
 import 'package:todo_tracker/features/tasks/presentation/screens/calendar_screen.dart';
+import 'package:todo_tracker/features/tasks/presentation/screens/reports_placeholder_screen.dart';
 import 'package:todo_tracker/features/tasks/presentation/screens/today_screen.dart';
 import 'package:todo_tracker/features/tasks/presentation/task_create_screen.dart';
 import 'package:todo_tracker/features/onboarding/presentation/onboarding_screen.dart';
@@ -45,7 +51,9 @@ GoRouter createAppRouter(Ref ref) {
       // has passed with unresolved tasks.
       if (path == RouteConstants.today ||
           path == RouteConstants.calendar ||
-          path == RouteConstants.backlog) {
+          path == RouteConstants.backlog ||
+          path == RouteConstants.reports ||
+          path == RouteConstants.settings) {
         final needsResolution = await _checkNeedsResolution(ref);
         if (needsResolution) {
           return RouteConstants.resolution;
@@ -57,8 +65,7 @@ GoRouter createAppRouter(Ref ref) {
     routes: [
       // The main shell with bottom navigation
       ShellRoute(
-        builder: (context, state, child) =>
-            DailyCatchupObserver(child: child),
+        builder: (context, state, child) => DailyCatchupObserver(child: child),
         routes: [
           StatefulShellRoute.indexedStack(
             builder: (context, state, navigationShell) =>
@@ -92,6 +99,25 @@ GoRouter createAppRouter(Ref ref) {
                   ),
                 ],
               ),
+              // Tab 3: Reports (Phase 2 — placeholder; nav tab is non-interactive)
+              StatefulShellBranch(
+                routes: [
+                  GoRoute(
+                    path: RouteConstants.reports,
+                    builder: (context, state) =>
+                        const ReportsPlaceholderScreen(),
+                  ),
+                ],
+              ),
+              // Tab 4: Settings
+              StatefulShellBranch(
+                routes: [
+                  GoRoute(
+                    path: RouteConstants.settings,
+                    builder: (context, state) => const SettingsScreen(),
+                  ),
+                ],
+              ),
             ],
           ),
         ],
@@ -101,20 +127,52 @@ GoRouter createAppRouter(Ref ref) {
       GoRoute(
         path: RouteConstants.taskCreate,
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const TaskCreateScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: const TaskCreateScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return SlideTransition(
+              position:
+                  Tween<Offset>(
+                    begin: const Offset(0, 0.06),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  ),
+              child: child,
+            );
+          },
+        ),
       ),
       GoRoute(
         path: RouteConstants.taskEdit,
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final id = state.pathParameters['id']!;
-          return TaskEditScreen(taskId: id);
+          return CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: TaskEditScreen(taskId: id),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return SlideTransition(
+                    position:
+                        Tween<Offset>(
+                          begin: const Offset(0, 0.06),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ),
+                    child: child,
+                  );
+                },
+          );
         },
-      ),
-      GoRoute(
-        path: RouteConstants.settings,
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         path: RouteConstants.resolution,
@@ -161,10 +219,10 @@ Future<bool> _checkNeedsResolution(Ref ref) async {
     if (logicalDate == null) return false;
 
     final taskDao = ref.read(taskDaoProvider);
-    final unresolvedDated =
-        await taskDao.getUnresolvedDatedTasks(logicalDate);
-    final unresolvedDaily =
-        await taskDao.getUnresolvedDailyInstances(logicalDate);
+    final unresolvedDated = await taskDao.getUnresolvedDatedTasks(logicalDate);
+    final unresolvedDaily = await taskDao.getUnresolvedDailyInstances(
+      logicalDate,
+    );
 
     return unresolvedDated.isNotEmpty || unresolvedDaily.isNotEmpty;
   } catch (_) {
@@ -172,36 +230,104 @@ Future<bool> _checkNeedsResolution(Ref ref) async {
   }
 }
 
-/// Scaffold shell providing BottomNavigationBar for the 3 main tabs.
-class MainShell extends StatelessWidget {
+/// Shell with DayDone bottom nav (5 tabs + FAB), shared create-task FAB.
+class MainShell extends ConsumerWidget {
   const MainShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summary = ref.watch(todaySummaryProvider);
+    final settingsAsync = ref.watch(settingsStreamProvider);
+    final now = DateTime.now();
+
+    var eveningFabGlow = false;
+    if (settingsAsync.hasValue && summary.pending > 0) {
+      final nextBed = nextBedtimeOccurrence(
+        now,
+        settingsAsync.requireValue.bedtime,
+      );
+      if (nextBed != null && nextBed.difference(now).inMinutes <= 45) {
+        eveningFabGlow = true;
+      }
+    }
+    final fabEvening = navigationShell.currentIndex == 0 && eveningFabGlow;
+
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+
     return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: navigationShell.currentIndex,
-        onTap: (index) => navigationShell.goBranch(
-          index,
-          initialLocation: index == navigationShell.currentIndex,
-        ),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.today),
-            label: 'Today',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month),
-            label: 'Calendar',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'Backlog',
+      extendBody: true,
+      body: Stack(
+        clipBehavior: Clip.none,
+        fit: StackFit.expand,
+        children: [
+          navigationShell,
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: safeBottom + 68 + 28,
+            child: Center(
+              child: _ShellCreateTaskFab(eveningUrgent: fabEvening),
+            ),
           ),
         ],
+      ),
+      bottomNavigationBar: DayDoneBottomNav(
+        currentIndex: navigationShell.currentIndex,
+        onDestinationSelected: (index) {
+          if (index == 3) return;
+          navigationShell.goBranch(
+            index,
+            initialLocation: index == navigationShell.currentIndex,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ShellCreateTaskFab extends StatelessWidget {
+  const _ShellCreateTaskFab({required this.eveningUrgent});
+
+  final bool eveningUrgent;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final error = AppColors.errorColor(brightness);
+
+    final glow = eveningUrgent
+        ? [
+            BoxShadow(
+              color: error.withValues(alpha: 0.45),
+              blurRadius: 16,
+              spreadRadius: 8,
+            ),
+          ]
+        : <BoxShadow>[];
+
+    final baseShadow = brightness == Brightness.light
+        ? AppTheme.fabShadowLight
+        : AppTheme.fabShadowDark;
+
+    return SizedBox(
+      width: 56,
+      height: 56,
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [...glow, ...baseShadow],
+        ),
+        child: FloatingActionButton(
+          onPressed: () => context.push(RouteConstants.taskCreate),
+          elevation: 0,
+          highlightElevation: 0,
+          child: Transform.translate(
+            offset: Offset(0, -0.5),
+            child: const Icon(Icons.add_rounded, size: 30, color: AppColors.onPrimary,),
+          ),
+        ),
       ),
     );
   }

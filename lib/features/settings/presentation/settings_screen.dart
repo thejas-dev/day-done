@@ -13,11 +13,13 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(settingsStreamProvider);
+    final isLight = Theme.of(context).brightness == Brightness.light;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
+      backgroundColor: isLight
+          ? AppColors.backgroundLight
+          : AppColors.backgroundDark,
+      appBar: AppBar(title: const Text('Settings')),
       body: settingsAsync.when(
         data: (settings) => _SettingsBody(
           bedtime: settings.bedtime,
@@ -56,42 +58,48 @@ class _SettingsBody extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return ListView(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.lg,
-      ),
+      padding: EdgeInsets.zero,
       children: [
         // ── Bedtime ──────────────────────────────────────────────────
         _SectionHeader(title: 'Schedule'),
-        const SizedBox(height: AppSpacing.sm),
         _SettingsTile(
-          icon: Icons.bedtime_outlined,
           title: 'Bedtime',
-          subtitle: _formatTime(bedtime),
+          value: _formatTime(bedtime),
           onTap: () => _pickBedtime(context, ref),
         ),
-        const SizedBox(height: AppSpacing.sm),
         _SettingsTile(
-          icon: Icons.wb_sunny_outlined,
           title: 'Morning check-in',
-          subtitle: _formatTime(morningCheckin),
+          value: _formatTime(morningCheckin),
           onTap: () => _pickMorningCheckin(context, ref),
         ),
+        _SettingsTile(
+          title: 'Notification Frequency',
+          value: switch (notificationMode) {
+            NotificationMode.minimal => 'Minimal',
+            NotificationMode.standard => 'Standard',
+            NotificationMode.persistent => 'Persistent',
+          },
+          onTap: () {},
+        ),
 
-        const SizedBox(height: AppSpacing.xl2),
+        const SizedBox(height: AppSpacing.md),
 
         // ── Notification mode ────────────────────────────────────────
         _SectionHeader(title: 'Notifications'),
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          'Choose how often DayDone reminds you about pending tasks.',
-          style: theme.textTheme.bodySmall,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+          child: Text(
+            'Choose how often DayDone reminds you about pending tasks.',
+            style: theme.textTheme.bodySmall,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         _NotificationModeSelector(
           selected: notificationMode,
           onChanged: (mode) {
-            ref.read(settingsActionsProvider.notifier).updateNotificationMode(mode);
+            ref
+                .read(settingsActionsProvider.notifier)
+                .updateNotificationMode(mode);
           },
         ),
       ],
@@ -105,8 +113,8 @@ class _SettingsBody extends ConsumerWidget {
     final displayHour = hour == 0
         ? 12
         : hour > 12
-            ? hour - 12
-            : hour;
+        ? hour - 12
+        : hour;
     return '$displayHour:${minute.toString().padLeft(2, '0')} $period';
   }
 
@@ -238,59 +246,79 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: Theme.of(context).textTheme.titleSmall,
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Text(
+        title.toUpperCase(),
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.32,
+          color: isLight
+              ? AppColors.textSecondaryLight
+              : AppColors.textSecondaryDark,
+        ),
+      ),
     );
   }
 }
 
 class _SettingsTile extends StatelessWidget {
   const _SettingsTile({
-    required this.icon,
     required this.title,
-    required this.subtitle,
+    required this.value,
     required this.onTap,
   });
 
-  final IconData icon;
   final String title;
-  final String subtitle;
+  final String value;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final surface = isLight ? AppColors.surfaceLight : AppColors.surfaceDark;
+    final divider = isLight ? AppColors.dividerLight : AppColors.dividerDark;
+    final primaryText = isLight
+        ? AppColors.textPrimaryLight
+        : AppColors.textPrimaryDark;
+    final secondaryText = isLight
+        ? AppColors.textSecondaryLight
+        : AppColors.textSecondaryDark;
 
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: AppRadius.mdAll,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          color: surface,
+          border: Border(
+            top: BorderSide(color: divider),
+            bottom: BorderSide(color: divider),
           ),
-          child: Row(
-            children: [
-              Icon(icon, color: theme.colorScheme.primary),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: theme.textTheme.bodySmall),
-                  ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 14,
+                  color: primaryText,
                 ),
               ),
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 13,
+                color: secondaryText,
               ),
-            ],
-          ),
+            ),
+            Icon(Icons.chevron_right, size: 18, color: secondaryText),
+          ],
         ),
       ),
     );
@@ -333,59 +361,72 @@ class _NotificationModeOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final borderColor = isSelected
-        ? theme.colorScheme.primary
-        : theme.colorScheme.outline;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final surface = isLight ? AppColors.surfaceLight : AppColors.surfaceDark;
+    final divider = isLight ? AppColors.dividerLight : AppColors.dividerDark;
+    final primary = isLight ? AppColors.primary : AppColors.primaryDark;
+    final secondary = isLight
+        ? AppColors.textSecondaryLight
+        : AppColors.textSecondaryDark;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.mdAll,
-          side: BorderSide(color: borderColor, width: isSelected ? 2 : 1),
-        ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: AppRadius.mdAll,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
+      padding: const EdgeInsets.only(bottom: 0),
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: surface,
+            border: Border(
+              top: BorderSide(color: divider),
+              bottom: BorderSide(
+                color: isSelected
+                    ? primary.withValues(alpha: isLight ? 0.75 : 0.65)
+                    : divider,
+                width: 1,
+              ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  _modeIcon,
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _modeTitle,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: isSelected
-                              ? theme.colorScheme.primary
-                              : null,
-                        ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _modeIcon,
+                color: isSelected ? primary : secondary,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _modeTitle,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 14,
+                        color: isSelected
+                            ? (isLight
+                                  ? AppColors.textPrimaryLight
+                                  : AppColors.textPrimaryDark)
+                            : secondary,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _modeDescription,
-                        style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _modeDescription,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 12,
+                        color: secondary.withValues(alpha: 0.9),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                if (isSelected)
-                  Icon(Icons.check_circle, color: theme.colorScheme.primary),
-              ],
-            ),
+              ),
+              if (isSelected)
+                Icon(Icons.check_circle, color: primary.withValues(alpha: 0.9)),
+            ],
           ),
         ),
       ),
@@ -393,24 +434,23 @@ class _NotificationModeOption extends StatelessWidget {
   }
 
   IconData get _modeIcon => switch (mode) {
-        NotificationMode.minimal => Icons.notifications_off_outlined,
-        NotificationMode.standard => Icons.notifications_outlined,
-        NotificationMode.persistent => Icons.notifications_active_outlined,
-      };
+    NotificationMode.minimal => Icons.notifications_off_outlined,
+    NotificationMode.standard => Icons.notifications_outlined,
+    NotificationMode.persistent => Icons.notifications_active_outlined,
+  };
 
   String get _modeTitle => switch (mode) {
-        NotificationMode.minimal => 'Minimal',
-        NotificationMode.standard => 'Standard',
-        NotificationMode.persistent => 'Persistent',
-      };
+    NotificationMode.minimal => 'Minimal',
+    NotificationMode.standard => 'Standard',
+    NotificationMode.persistent => 'Persistent',
+  };
 
   String get _modeDescription => switch (mode) {
-        NotificationMode.minimal => 'Bedtime reminder only',
-        NotificationMode.standard =>
-          'Morning check-in, 2h & 1h before bedtime',
-        NotificationMode.persistent =>
-          'Morning + frequent reminders as bedtime approaches',
-      };
+    NotificationMode.minimal => 'Bedtime reminder only',
+    NotificationMode.standard => 'Morning check-in, 2h & 1h before bedtime',
+    NotificationMode.persistent =>
+      'Morning + frequent reminders as bedtime approaches',
+  };
 }
 
 /// Bottom sheet for scrollable time selection.
@@ -447,8 +487,8 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
     final displayHour = hour == 0
         ? 12
         : hour > 12
-            ? hour - 12
-            : hour;
+        ? hour - 12
+        : hour;
     return '$displayHour:${minute.toString().padLeft(2, '0')} $period';
   }
 
@@ -476,10 +516,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
             ),
             const SizedBox(height: AppSpacing.lg),
 
-            Text(
-              widget.title,
-              style: theme.textTheme.titleLarge,
-            ),
+            Text(widget.title, style: theme.textTheme.titleLarge),
             const SizedBox(height: AppSpacing.lg),
 
             // Time grid

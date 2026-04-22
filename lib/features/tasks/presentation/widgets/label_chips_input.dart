@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:todo_tracker/core/constants/app_constants.dart';
 import 'package:todo_tracker/core/theme/app_colors.dart';
+import 'package:todo_tracker/core/widgets/chip_ds.dart';
 import 'package:todo_tracker/features/tasks/presentation/providers/task_providers.dart';
 
-/// An input field that lets the user type and add label chips.
-/// - Max [AppConstants.maxLabels] labels.
-/// - Each label max [AppConstants.maxLabelChars] characters.
-/// - Suggestions sourced from [distinctLabelsProvider] (case-insensitive prefix match).
-/// - Duplicate labels (case-insensitive) are silently ignored.
+/// Labels row — `styles.css` `.filter-chip` / `.filter-chip.active`; **+ Add label**
+/// matches outlined chip (`btn-secondary`-style outline).
 class LabelChipsInput extends ConsumerStatefulWidget {
   const LabelChipsInput({
     super.key,
@@ -32,9 +30,12 @@ class _LabelChipsInputState extends ConsumerState<LabelChipsInput> {
   @override
   void initState() {
     super.initState();
+    _controller.addListener(() => setState(() {}));
     _focusNode.addListener(() {
       if (!_focusNode.hasFocus) {
         setState(() => _showSuggestions = false);
+      } else {
+        setState(() {});
       }
     });
   }
@@ -60,9 +61,11 @@ class _LabelChipsInputState extends ConsumerState<LabelChipsInput> {
 
     final existing = widget.labels.map((l) => l.toLowerCase()).toSet();
     final matches = allLabels
-        .where((l) =>
-            l.toLowerCase().startsWith(trimmed) &&
-            !existing.contains(l.toLowerCase()))
+        .where(
+          (l) =>
+              l.toLowerCase().startsWith(trimmed) &&
+              !existing.contains(l.toLowerCase()),
+        )
         .toList();
 
     setState(() {
@@ -95,77 +98,144 @@ class _LabelChipsInputState extends ConsumerState<LabelChipsInput> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final theme = Theme.of(context);
+    final isLight = brightness == Brightness.light;
+    final primary =
+        isLight ? AppColors.primary : AppColors.primaryDark;
+    final pcBg =
+        isLight ? AppColors.primaryContainer : AppColors.primaryContainerDark;
+
     final allLabelsAsync = ref.watch(distinctLabelsProvider);
     final allLabels = allLabelsAsync.valueOrNull ?? [];
+
+    final activeChipColors = ChipDSColors(
+      background: pcBg,
+      border: primary,
+      foreground: primary,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Existing chips
-        if (widget.labels.isNotEmpty) ...[
-          Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: widget.labels.map((label) {
-              return Chip(
-                label: Text(label),
-                labelStyle: Theme.of(context).textTheme.labelMedium,
-                deleteIcon: const Icon(Icons.close, size: 14),
-                onDeleted: () => _removeLabel(label),
-                backgroundColor: brightness == Brightness.light
-                    ? AppColors.surfaceVariantLight
-                    : AppColors.surfaceVariantDark,
-                side: BorderSide(
-                  color: brightness == Brightness.light
-                      ? AppColors.borderLight
-                      : AppColors.borderDark,
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            ...widget.labels.map((label) {
+              return ChipDS(
+                label: label,
+                active: true,
+                colors: activeChipColors,
+                trailing: InkWell(
+                  onTap: () => _removeLabel(label),
+                  customBorder: const CircleBorder(),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text(
+                      '×',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: primary,
+                      ),
+                    ),
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm, vertical: 0),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               );
-            }).toList(),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
+            }),
+            if (!_atLimit) ...[
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => _focusNode.requestFocus(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: primary, width: 1),
+                    ),
+                    child: Text(
+                      '+ Add label',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: primary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
 
-        // Text input
-        if (!_atLimit)
+        if (!_atLimit) ...[
+          const SizedBox(height: 8),
           TextField(
             controller: _controller,
             focusNode: _focusNode,
             maxLength: AppConstants.maxLabelChars,
+            style: theme.textTheme.bodyMedium,
             decoration: InputDecoration(
-              hintText: 'Add label…',
+              hintText: 'Type a label, then tap + or Enter',
+              hintStyle: theme.textTheme.bodySmall?.copyWith(
+                color: isLight
+                    ? AppColors.textSecondaryLight
+                    : AppColors.textSecondaryDark,
+              ),
               counterText: '',
               suffixIcon: _controller.text.trim().isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.add, size: 20),
+                      icon: Icon(Icons.add_circle_outline, color: primary),
                       onPressed: () => _addLabel(_controller.text),
                     )
                   : null,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 6),
+              border: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: isLight
+                      ? AppColors.dividerLight
+                      : AppColors.dividerDark,
+                ),
+              ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: isLight
+                      ? AppColors.dividerLight
+                      : AppColors.dividerDark,
+                ),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: primary, width: 1.5),
+              ),
             ),
             onChanged: (v) => _onTextChanged(v, allLabels),
             onSubmitted: _addLabel,
-          )
+          ),
+        ]
         else
           Text(
             'Max ${AppConstants.maxLabels} labels reached',
-            style: Theme.of(context).textTheme.bodySmall,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: isLight
+                  ? AppColors.textSecondaryLight
+                  : AppColors.textSecondaryDark,
+            ),
           ),
 
-        // Suggestions dropdown
         if (_showSuggestions)
           Container(
             margin: const EdgeInsets.only(top: AppSpacing.xs),
             decoration: BoxDecoration(
-              color: brightness == Brightness.light
-                  ? AppColors.surfaceLight
-                  : AppColors.surfaceDark,
+              color: isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
               border: Border.all(
-                color: brightness == Brightness.light
-                    ? AppColors.borderLight
-                    : AppColors.borderDark,
+                color: isLight ? AppColors.borderLight : AppColors.borderDark,
               ),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
@@ -181,8 +251,7 @@ class _LabelChipsInputState extends ConsumerState<LabelChipsInput> {
                     ),
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(s,
-                          style: Theme.of(context).textTheme.bodyMedium),
+                      child: Text(s, style: theme.textTheme.bodyMedium),
                     ),
                   ),
                 );

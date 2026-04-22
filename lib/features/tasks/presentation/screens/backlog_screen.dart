@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:todo_tracker/core/theme/app_colors.dart';
+import 'package:todo_tracker/core/widgets/section_header.dart';
 import 'package:todo_tracker/features/tasks/domain/task_model.dart';
 import 'package:todo_tracker/features/tasks/domain/today_task.dart';
 import 'package:todo_tracker/features/tasks/presentation/providers/backlog_provider.dart';
@@ -44,8 +45,11 @@ class _BacklogScreenState extends ConsumerState<BacklogScreen> {
 
   Widget _buildContent(BuildContext context, List<TaskModel> allDatedTasks) {
     final now = DateTime.now();
-    final todayEnd = DateTime(now.year, now.month, now.day)
-        .add(const Duration(days: 1));
+    final todayEnd = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).add(const Duration(days: 1));
 
     // Future tasks (tomorrow+) and null-date backlog tasks
     final futureTasks = allDatedTasks.where((task) {
@@ -90,8 +94,11 @@ class _BacklogScreenState extends ConsumerState<BacklogScreen> {
       if (model.date == null) {
         noDateTasks.add(task);
       } else {
-        final dateKey =
-            DateTime(model.date!.year, model.date!.month, model.date!.day);
+        final dateKey = DateTime(
+          model.date!.year,
+          model.date!.month,
+          model.date!.day,
+        );
         grouped.putIfAbsent(dateKey, () => []).add(task);
       }
     }
@@ -184,26 +191,23 @@ class _DateHeader extends StatelessWidget {
       }
     }
 
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.only(
-          left: AppSpacing.lg,
-          right: AppSpacing.lg,
-          top: AppSpacing.lg,
-          bottom: AppSpacing.xs,
-        ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-      ),
-    );
+    return SliverToBoxAdapter(child: SectionHeaderDS(label: label));
   }
 
   static String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 

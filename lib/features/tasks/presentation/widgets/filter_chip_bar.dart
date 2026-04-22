@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:todo_tracker/core/theme/app_colors.dart';
+import 'package:todo_tracker/core/widgets/chip_ds.dart';
 import 'package:todo_tracker/features/tasks/domain/priority.dart';
 import 'package:todo_tracker/features/tasks/domain/today_task.dart';
 
@@ -42,14 +43,43 @@ class _FilterChipBarState extends State<FilterChipBar> {
     }
 
     final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+    final allActive = _selectedPriorities.isEmpty && _selectedLabels.isEmpty;
 
     return SizedBox(
-      height: 44,
+      height: 46,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          10,
+        ),
         children: [
-          // Priority chips
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            child: ChipDS(
+              label: 'All',
+              active: allActive,
+              colors: isDark && !allActive
+                  ? ChipDSColors(
+                      background: Colors.transparent,
+                      border: AppColors.chipBorderDark.withValues(alpha: 0.7),
+                      foreground: AppColors.textSecondaryDark.withValues(
+                        alpha: 0.9,
+                      ),
+                    )
+                  : null,
+              onTap: () {
+                setState(() {
+                  _selectedPriorities.clear();
+                  _selectedLabels.clear();
+                });
+                _emitFilter();
+              },
+            ),
+          ),
           for (final priority in availablePriorities)
             Padding(
               padding: const EdgeInsets.only(right: AppSpacing.sm),
@@ -70,7 +100,6 @@ class _FilterChipBarState extends State<FilterChipBar> {
               ),
             ),
 
-          // Separator between priority and label chips
           if (availablePriorities.isNotEmpty && availableLabels.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(right: AppSpacing.sm),
@@ -83,13 +112,13 @@ class _FilterChipBarState extends State<FilterChipBar> {
               ),
             ),
 
-          // Label chips
           for (final label in availableLabels)
             Padding(
               padding: const EdgeInsets.only(right: AppSpacing.sm),
               child: _LabelFilterChip(
                 label: label,
                 selected: _selectedLabels.contains(label),
+                brightness: brightness,
                 onSelected: (selected) {
                   setState(() {
                     if (selected) {
@@ -130,10 +159,12 @@ class _FilterChipBarState extends State<FilterChipBar> {
   }
 
   void _emitFilter() {
-    widget.onFilterChanged(TaskFilter(
-      priorities: Set.unmodifiable(_selectedPriorities),
-      labels: Set.unmodifiable(_selectedLabels),
-    ));
+    widget.onFilterChanged(
+      TaskFilter(
+        priorities: Set.unmodifiable(_selectedPriorities),
+        labels: Set.unmodifiable(_selectedLabels),
+      ),
+    );
   }
 }
 
@@ -142,10 +173,7 @@ class TaskFilter {
   final Set<Priority> priorities;
   final Set<String> labels;
 
-  const TaskFilter({
-    this.priorities = const {},
-    this.labels = const {},
-  });
+  const TaskFilter({this.priorities = const {}, this.labels = const {}});
 
   bool get isEmpty => priorities.isEmpty && labels.isEmpty;
 
@@ -156,12 +184,10 @@ class TaskFilter {
     if (isEmpty) return tasks;
 
     return tasks.where((task) {
-      // Priority filter (OR): if any priorities selected, task must match one.
       if (priorities.isNotEmpty && !priorities.contains(task.priority)) {
         return false;
       }
 
-      // Label filter (AND): task must contain ALL selected labels.
       if (labels.isNotEmpty) {
         for (final label in labels) {
           if (!task.labels.contains(label)) {
@@ -174,8 +200,6 @@ class TaskFilter {
     }).toList();
   }
 }
-
-// ── Private chip widgets ──────────────────────────────────────────────────────
 
 class _PriorityFilterChip extends StatelessWidget {
   const _PriorityFilterChip({
@@ -192,58 +216,59 @@ class _PriorityFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.priorityColors(priority, brightness);
+    final c = AppColors.priorityColors(priority, brightness);
+    final colors = selected
+        ? ChipDSColors(
+            background: c.badge,
+            border: c.border,
+            foreground: c.icon,
+          )
+        : null;
 
-    return FilterChip(
-      label: Text(_priorityLabel(priority)),
-      selected: selected,
-      onSelected: onSelected,
-      selectedColor: colors.badge,
-      checkmarkColor: colors.border,
-      side: selected
-          ? BorderSide(color: colors.border, width: 1)
-          : BorderSide.none,
-      labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: selected ? colors.border : null,
-          ),
+    return ChipDS(
+      label: _priorityLabel(priority),
+      active: selected,
+      colors: colors,
+      onTap: () => onSelected(!selected),
     );
   }
 
   static String _priorityLabel(Priority priority) => switch (priority) {
-        Priority.none => 'None',
-        Priority.low => 'Low',
-        Priority.medium => 'Medium',
-        Priority.high => 'High',
-        Priority.urgent => 'Urgent',
-      };
+    Priority.none => 'None',
+    Priority.low => 'Low',
+    Priority.medium => 'Medium',
+    Priority.high => 'High',
+    Priority.urgent => 'Urgent',
+  };
 }
 
 class _LabelFilterChip extends StatelessWidget {
   const _LabelFilterChip({
     required this.label,
     required this.selected,
+    required this.brightness,
     required this.onSelected,
   });
 
   final String label;
   final bool selected;
+  final Brightness brightness;
   final ValueChanged<bool> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    return FilterChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: onSelected,
-      selectedColor: Theme.of(context).colorScheme.primaryContainer,
-      checkmarkColor: Theme.of(context).colorScheme.primary,
-      side: selected
-          ? BorderSide(
-              color: Theme.of(context).colorScheme.primary, width: 1)
-          : BorderSide.none,
-      labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: selected ? Theme.of(context).colorScheme.primary : null,
-          ),
+    final isDark = brightness == Brightness.dark;
+    return ChipDS(
+      label: label,
+      active: selected,
+      colors: isDark && !selected
+          ? ChipDSColors(
+              background: Colors.transparent,
+              border: AppColors.chipBorderDark.withValues(alpha: 0.7),
+              foreground: AppColors.textSecondaryDark.withValues(alpha: 0.9),
+            )
+          : null,
+      onTap: () => onSelected(!selected),
     );
   }
 }

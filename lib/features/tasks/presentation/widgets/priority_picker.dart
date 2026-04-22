@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:todo_tracker/core/theme/app_colors.dart';
 import 'package:todo_tracker/features/tasks/domain/priority.dart';
 
-/// A 5-segment horizontal control for selecting [Priority].
-/// Fires [onChanged] when the user taps a segment.
+/// Priority pills — design ref `styles.css` `.priority-pill` (12px, 1.5px border,
+/// filled active state with white label for Low–Urgent; None uses bg + outline).
 class PriorityPicker extends StatelessWidget {
   const PriorityPicker({
     super.key,
@@ -17,63 +17,80 @@ class PriorityPicker extends StatelessWidget {
   static const _labels = {
     Priority.none: 'None',
     Priority.low: 'Low',
-    Priority.medium: 'Med',
+    Priority.medium: 'Medium',
     Priority.high: 'High',
     Priority.urgent: 'Urgent',
   };
 
+  static const _gap = 6.0;
+
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return Row(
+    final isLight = brightness == Brightness.light;
+    final divider = isLight ? AppColors.dividerLight : AppColors.dividerDark;
+    final bg = isLight ? AppColors.backgroundLight : AppColors.backgroundDark;
+    final secondary =
+        isLight ? AppColors.textSecondaryLight : AppColors.textSecondaryDark;
+    final primaryText =
+        isLight ? AppColors.textPrimaryLight : AppColors.textPrimaryDark;
+    final secondBorder =
+        isLight ? AppColors.textSecondaryLight : AppColors.textSecondaryDark;
+
+    return Wrap(
+      spacing: _gap,
+      runSpacing: _gap,
       children: Priority.values.map((p) {
         final selected = p == value;
-        final colors = AppColors.priorityColors(p, brightness);
-        final borderColor = p == Priority.none
-            ? (brightness == Brightness.light
-                ? AppColors.borderLight
-                : AppColors.borderDark)
-            : colors.border;
+        final pc = AppColors.priorityColors(p, brightness);
 
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: GestureDetector(
-              onTap: () => onChanged(p),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                height: 36,
-                decoration: BoxDecoration(
-                  color: selected
-                      ? (p == Priority.none
-                          ? (brightness == Brightness.light
-                              ? AppColors.surfaceVariantLight
-                              : AppColors.surfaceVariantDark)
-                          : colors.badge)
-                      : Colors.transparent,
-                  border: Border.all(
-                    color: selected ? borderColor : borderColor.withValues(alpha: 0.4),
-                    width: selected ? 1.5 : 1.0,
-                  ),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  _labels[p]!,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: selected
-                            ? (p == Priority.none
-                                ? (brightness == Brightness.light
-                                    ? AppColors.textSecondaryLight
-                                    : AppColors.textSecondaryDark)
-                                : colors.icon)
-                            : (brightness == Brightness.light
-                                ? AppColors.textMutedLight
-                                : AppColors.textMutedDark),
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w400,
-                      ),
-                ),
+        late Color borderC;
+        late Color fg;
+        Color? fill;
+
+        if (p == Priority.none) {
+          if (selected) {
+            borderC = secondBorder;
+            fg = primaryText;
+            fill = bg;
+          } else {
+            borderC = divider;
+            fg = secondary;
+            fill = null;
+          }
+        } else {
+          if (selected) {
+            borderC = pc.border;
+            fg = Colors.white;
+            fill = pc.border;
+          } else {
+            borderC = pc.border;
+            fg = pc.border;
+            fill = null;
+          }
+        }
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: () => onChanged(p),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: fill ?? Colors.transparent,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: borderC, width: 1.5),
+              ),
+              child: Text(
+                _labels[p]!,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: fg,
+                      height: 1.2,
+                    ),
               ),
             ),
           ),
