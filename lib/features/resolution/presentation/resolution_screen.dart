@@ -472,7 +472,7 @@ class _EodTaskRowState extends ConsumerState<_EodTaskRow> {
               ),
             ),
             Positioned(
-              left: 5,
+              left: 0,
               top: 0,
               bottom: 0,
               width: kPriorityStripWidth,

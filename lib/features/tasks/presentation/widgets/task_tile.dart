@@ -10,8 +10,9 @@ import 'package:todo_tracker/features/tasks/presentation/widgets/task_action_she
 
 /// Task row — design ref `primitives.jsx:170 TaskTile`.
 ///
-/// Layout: shadow + radius only (no outline border), 4px absolute-positioned
-/// priority stripe on the leading edge, 20px left padding to clear it. Urgent
+/// Layout: shadow + radius only (no outline border), [kPriorityStripWidth]
+/// priority stripe flush to the leading edge (clipped to tile corner radius),
+/// 20px left padding to clear it. Urgent
 /// pre-bedtime tiles get a flat `urgentTileTint` background plus a 13%-alpha
 /// `pUrgent` border (= the design's `pUrgent22` token).
 class TaskTile extends ConsumerWidget {
@@ -58,6 +59,10 @@ class TaskTile extends ConsumerWidget {
         ? AppColors.priorityUrgentLight
         : AppColors.priorityUrgentDark;
 
+    final priorityHue = task.priority != Priority.none
+        ? AppColors.priorityColor(task.priority, brightness)
+        : null;
+
     Widget tile = Material(
       color: Colors.transparent,
       child: InkWell(
@@ -81,28 +86,50 @@ class TaskTile extends ConsumerWidget {
                   )
                 : null,
           ),
-          child: Stack(
-            children: [
-              if (task.priority != Priority.none)
-                Positioned(
-                  left: 5,
-                  top: 0,
-                  bottom: 0,
-                  width: kPriorityStripWidth,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.priorityColor(
-                        task.priority,
-                        brightness,
-                      ).withValues(alpha: (isStrike || isSnoozed) ? 0.35 : 1.0),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(AppRadius.md),
-                        bottomLeft: Radius.circular(AppRadius.md),
+          child: ClipRRect(
+            borderRadius: AppRadius.mdAll,
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: [
+                if (priorityHue != null)
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        // Wash spans ~50% of tile width (design system): vector
+                        // runs from leading edge to horizontal center; fade
+                        // completes at center so the right half stays neutral.
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            priorityHue.withValues(
+                              alpha: ((isStrike || isSnoozed) ? 0.42 : 1.0) *
+                                  (isLight ? 0.09 : 0.10),
+                            ),
+                            priorityHue.withValues(
+                              alpha: ((isStrike || isSnoozed) ? 0.42 : 1.0) *
+                                  (isLight ? 0.028 : 0.036),
+                            ),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.45, 1.0],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              Padding(
+                if (priorityHue != null)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: kPriorityStripWidth,
+                    child: ColoredBox(
+                      color: priorityHue.withValues(
+                        alpha: (isStrike || isSnoozed) ? 0.35 : 1.0,
+                      ),
+                    ),
+                  ),
+                Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
                 child: Row(
                   crossAxisAlignment: hasSecondaryContent
@@ -140,7 +167,8 @@ class TaskTile extends ConsumerWidget {
                   ],
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
