@@ -280,10 +280,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   label: 'Allow Notifications',
                   onPressed: () async {
                     final service = ref.read(notificationServiceProvider);
-                    await service.requestPermissions();
-                    await ref
-                        .read(settingsActionsProvider.notifier)
-                        .updateNotificationPermissionAsked();
+                    final granted = await service.requestPermissions();
+                    print("granted: $granted");
+                    if (granted) {
+                      await ref
+                          .read(settingsActionsProvider.notifier)
+                          .updateNotificationPermissionAsked();
+                    }
                     await _completeOnboarding();
                   },
                 ),

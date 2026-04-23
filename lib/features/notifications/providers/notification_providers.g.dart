@@ -86,5 +86,26 @@ final notificationRescheduleTriggerProvider = Provider<void>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef NotificationRescheduleTriggerRef = ProviderRef<void>;
+String _$notificationPermissionBootstrapTriggerHash() =>
+    r'fc05f858466a82a149bf368bcf62061ce6420315';
+
+/// Prompts for notification permission once for already-onboarded users who
+/// were never asked (for example, after upgrading from an older build).
+///
+/// Copied from [notificationPermissionBootstrapTrigger].
+@ProviderFor(notificationPermissionBootstrapTrigger)
+final notificationPermissionBootstrapTriggerProvider = Provider<void>.internal(
+  notificationPermissionBootstrapTrigger,
+  name: r'notificationPermissionBootstrapTriggerProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$notificationPermissionBootstrapTriggerHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef NotificationPermissionBootstrapTriggerRef = ProviderRef<void>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

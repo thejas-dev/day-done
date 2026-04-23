@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/services.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:todo_tracker/core/constants/notification_constants.dart';
 import 'package:todo_tracker/features/notifications/services/notification_scheduler.dart';
@@ -66,8 +67,18 @@ class NotificationService {
     if (Platform.isAndroid) {
       final android = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
-      final result = await android?.requestNotificationsPermission();
-      return result ?? false;
+      if (android == null) return false;
+
+      // If notifications are already enabled, no runtime prompt is needed.
+      final enabledBeforePrompt = await android.areNotificationsEnabled();
+      if (enabledBeforePrompt ?? false) return true;
+
+      final requestResult = await android.requestNotificationsPermission();
+      if (requestResult != null) return requestResult;
+
+      // Some Android versions/devices can return null; re-check OS state.
+      final enabledAfterPrompt = await android.areNotificationsEnabled();
+      return enabledAfterPrompt ?? false;
     }
 
     return false;
@@ -161,7 +172,10 @@ class NotificationService {
 
   /// Schedule a list of notifications, cancelling existing ones first.
   Future<void> scheduleAll(List<ScheduledNotification> notifications) async {
-    await cancelAll();
+    // Avoid cancelAll() before scheduling because some Android devices/builds
+    // can have an unreadable persisted cache in the plugin, which makes cancel
+    // paths throw and blocks all subsequent scheduling. Reusing stable IDs
+    // allows zonedSchedule() to replace existing entries.
     for (final n in notifications) {
       await scheduleNotification(n);
     }
@@ -208,12 +222,40 @@ class NotificationService {
   /// Cancel all scheduled notifications.
   Future<void> cancelAll() async {
     await _ensureInitialized();
-    await _plugin.cancelAll();
+    try {
+      await _plugin.cancelAll();
+    } on PlatformException {
+      // Workaround: some Android/plugin/device combos can throw when reading
+      // persisted scheduled notifications during cancelAll(). Fallback to
+      // explicit known IDs so rescheduling can proceed.
+      const knownIds = <int>[
+        NotificationIds.morning,
+        NotificationIds.tMinus4h,
+        NotificationIds.tMinus2h,
+        NotificationIds.tMinus1h,
+        NotificationIds.tMinus30m,
+        NotificationIds.tMinus10m,
+        NotificationIds.bedtime,
+        NotificationIds.allDoneEarly,
+      ];
+      for (final id in knownIds) {
+        try {
+          await _plugin.cancel(id);
+        } on PlatformException {
+          // If cache is unreadable, individual cancel can fail too. Swallow to
+          // prevent notification flow from breaking on repeated attempts.
+        }
+      }
+    }
   }
 
   /// Cancel a specific notification by id.
   Future<void> cancelById(int id) async {
     await _ensureInitialized();
-    await _plugin.cancel(id);
+    try {
+      await _plugin.cancel(id);
+    } on PlatformException {
+      // Some plugin cache states can break cancel-by-id on Android.
+    }
   }
 }

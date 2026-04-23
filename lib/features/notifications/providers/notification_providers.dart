@@ -8,6 +8,8 @@ import 'package:todo_tracker/features/tasks/presentation/providers/today_summary
 
 part 'notification_providers.g.dart';
 
+bool _didAttemptPermissionBootstrapThisSession = false;
+
 /// Singleton [NotificationService] — initialized once, kept alive.
 @Riverpod(keepAlive: true)
 NotificationService notificationService(Ref ref) {
@@ -57,6 +59,36 @@ void notificationRescheduleTrigger(Ref ref) {
     operation.catchError((Object e, StackTrace s) {
       // ignore: avoid_print
       print('[NOTIF] ERROR: $e\n$s');
+    });
+  });
+}
+
+/// Prompts for notification permission once for already-onboarded users who
+/// were never asked (for example, after upgrading from an older build).
+@Riverpod(keepAlive: true)
+void notificationPermissionBootstrapTrigger(Ref ref) {
+  final settingsAsync = ref.watch(settingsStreamProvider);
+
+  settingsAsync.whenData((settings) {
+    if (!settings.onboardingCompleted ||
+        settings.notificationPermissionAsked ||
+        _didAttemptPermissionBootstrapThisSession) {
+      return;
+    }
+
+    _didAttemptPermissionBootstrapThisSession = true;
+
+    Future<void>(() async {
+      final granted =
+          await ref.read(notificationServiceProvider).requestPermissions();
+      if (granted) {
+        await ref
+            .read(settingsActionsProvider.notifier)
+            .updateNotificationPermissionAsked();
+      }
+    }).catchError((Object e, StackTrace s) {
+      // ignore: avoid_print
+      print('[NOTIF] PERMISSION ERROR: $e\n$s');
     });
   });
 }

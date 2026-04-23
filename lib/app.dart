@@ -23,6 +23,7 @@ class App extends ConsumerWidget {
     // Initialize the notification reschedule trigger so it starts
     // watching settings + today summary and scheduling notifications.
     ref.watch(notificationRescheduleTriggerProvider);
+    ref.watch(notificationPermissionBootstrapTriggerProvider);
 
     return MaterialApp.router(
       title: 'DayDone',
